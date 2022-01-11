@@ -1,0 +1,92 @@
+---
+ansible_host: 192.168.1.102
+ansible_user: ricky
+ansible_sudo_pass: "{{ sudo_pass }}"
+
+# NVR
+nvr_ip_address: 192.168.1.129
+nvr_port: 8081
+
+# Docker
+#
+# From Nginx proxy's perpective
+# If Nginx and docker are on the same machine, then `docker_host`
+# would be `localhost`
+docker_host: localhost
+docker_compose_directory: "/docker"
+
+# Script
+scripts_directory: "/scripts"
+
+# NFS
+nfs_host: 192.168.1.34
+nfs_share: /eggs
+nfs_mountpoint: /mnt/eggs
+
+# Backup drive to mount
+backup_mountpoint: /mnt/backup
+backup_device: /dev/sdb1
+
+# influxdb host
+# from telegraf's machine's perpective
+# if telegraf and influxdb is on same host
+# then influxdb_host would be `localhost`
+inflxudb_host: 192.168.1.34
+
+# ----------------------------------------------------------
+# nginx
+nginx_vhost_template: "{{ playbook_dir }}/templates/proxy.j2"
+nginx_remove_default_vhost: true
+nginx_listen_ipv6: false
+nginx_vhosts:
+  - server_name: "nvr.rickyd.duckdns.org"
+    filename: "nvr.rickyd.duckdns.org.conf"
+    proxy_host: "http://{{ nvr_ip_address }}:{{ nvr_port }}"
+    extra_parameters: |
+      location /XProtectMobile/Video {
+          proxy_pass http://{{ nvr_ip_address }}:{{ nvr_port }};
+          proxy_buffering off;
+          proxy_http_version 1.1;
+
+          # These two headers come from the browser to NGINX, but they do
+          # not get passed through NGINX, so we will set them manually.
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection "Upgrade";
+
+          # These two headers do not come through from the browser as the
+          # Milestone server wants to see them, so we will set them manually.
+          proxy_set_header Host {{ nvr_ip_address }}:{{ nvr_port }};
+          proxy_set_header Origin http://{{ nvr_ip_address }}:{{ nvr_port }};
+      }
+
+  - server_name: "shaarli.rickyd.duckdns.org"
+    filename: "shaarli.rickyd.duckdns.org.conf"
+    proxy_host: "http://{{ docker_host }}:28010"
+
+  - server_name: "grafana.rickyd.duckdns.org"
+    filename: "grafana.rickyd.duckdns.org.conf"
+    proxy_host: "http://{{ docker_host }}:3000"
+
+# cerbot
+certbot_install_method: snap
+certbot_create_if_missing: true
+certbot_admin_email: rickyd@fastmail.com
+certbot_create_standalone_stop_services:
+  - nginx
+certbot_auto_renew_user: root
+certbot_certs:
+  - domains:
+      - nvr.rickyd.duckdns.org
+  - domains:
+      - shaarli.rickyd.duckdns.org
+  - domains:
+      - grafana.rickyd.duckdns.org
+
+# unattended upgrades
+unattended_origins_patterns:
+  - "origin={{ ansible_os_family }},codename=${distro_codename}-updates"
+  - "o=Docker,a={{ ansible_distribution_release }},l=Docker CE,c=stable"
+  - "origin={{ ansible_os_family }},codename=${distro_codename},label={{ ansible_os_family }}"
+  - "origin={{ ansible_os_family }},codename=${distro_codename},label={{ ansible_os_family }}-Security"
+  - "origin={{ ansible_os_family }},codename=${distro_codename}-security,label={{ ansible_os_family }}-Security"
+unattended_automatic_reboot: true

@@ -1,0 +1,8 @@
+---
+collections:
+  - community.general
+
+roles:
+  - geerlingguy.nginx
+  - geerlingguy.certbot
+  - jnv.unattended-upgrades

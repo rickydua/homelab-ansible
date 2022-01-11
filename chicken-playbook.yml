@@ -1,0 +1,212 @@
+---
+- hosts: chicken
+  become: true
+  vars_prompt:
+    - name: "restic_password"
+      prompt: "restic password?"
+
+  pre_tasks:
+    - name: "Check mandatory variables are defined"
+      assert:
+        that:
+          - sudo_pass is defined
+          - influxdb_pass is defined
+          - pihole_pass is defined
+          - influxdb_token is defined
+          - ansible_user_id == "root"
+
+    - name: "add Docker & telegraph GPG key"
+      apt_key:
+        url: "{{ item.url }}"
+        state: present
+        keyring: "{{ item.keyring }}"
+      loop:
+        - url: "https://download.docker.com/linux/{{ ansible_lsb.id|lower }}/gpg"
+          keyring: "/usr/share/keyrings/docker-archive-keyring.gpg"
+
+        - url: "https://repos.influxdata.com/influxdb.key"
+          keyring: "/etc/apt/trusted.gpg.d/telegraf.gpg"
+
+    - name: "add docker & influx_telegraf repository"
+      apt_repository:
+        filename: "{{ item.filename }}"
+        repo: "{{ item.repo }}"
+      loop:
+        - filename: "docker"
+          repo: >-
+            deb
+            [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg]
+            https://download.docker.com/linux/{{ ansible_lsb.id|lower }}
+            {{ ansible_lsb.codename|lower }} stable
+
+        - filename: "influx_telegraf"
+          repo: >-
+            deb https://repos.influxdata.com/{{ ansible_lsb.id|lower }}
+            {{ ansible_lsb.codename|lower }} stable
+
+    - name: "update apt cache and upgrade"
+      apt:
+        update_cache: true
+        upgrade: true
+
+  tasks:
+    - name: "install packages"
+      apt:
+        name:
+          - qemu-guest-agent
+          - nfs-common
+          - lsb-release
+          - gnupg
+          - curl
+          - ca-certificates
+          - htop
+          - python3-pip
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - restic
+          - telegraf
+
+    - name: "create directories"
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        mode: "{{ item.mode }}"
+      loop:
+        - path: "{{ nfs_mountpoint }}"
+          mode: "0777"
+
+        - path: "{{ docker_compose_directory }}"
+          mode: "0755"
+
+        - path: "{{ ansible_user_dir }}/restic"
+          mode: "0755"
+
+        - path: "{{ backup_mountpoint }}"
+          mode: "0755"
+
+        - path: "/etc/systemd/system/telegraf.service.d"
+          mode: "0755"
+
+    - name: "copy scripts and files over"
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - src: "./files/docker-compose.yml"
+          dest: "{{ docker_compose_directory }}/docker-compose.yml"
+          mode: "0644"
+        - src: "./scripts/"
+          dest: "{{ scripts_directory }}"
+          mode: "0755"
+
+    - name: "template over files"
+      template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: 0644
+      loop:
+        - src: "./templates/docker-compose.env.j2"
+          dest: "{{ docker_compose_directory }}/.env"
+
+        - src: "./templates/excludes.txt.j2"
+          dest: "{{ ansible_user_dir }}/restic/excludes.txt"
+
+        - src: "./templates/telegraf_env_vars.j2"
+          dest: "/etc/default/telegraf"
+
+        - src: "./templates/systemd.telegraf.override.confg.j2"
+          dest: "/etc/systemd/system/telegraf.service.d/override.conf"
+
+        - src: "./templates/env.sh.j2"
+          dest: "{{ ansible_user_dir }}/env.sh"
+
+    - name: "mount backup device and nfs"
+      mount:
+        src: "{{ item.src }}"
+        path: "{{ item.path }}"
+        fstype: "{{ item.fstype }}"
+        state: mounted
+      loop:
+        - src: "{{ nfs_host }}:{{ nfs_share }}"
+          path: "{{ nfs_mountpoint }}"
+          fstype: nfs
+
+        - src: "{{ backup_device }}"
+          path: "{{ backup_mountpoint }}"
+          fstype: ext4
+
+    - name: "install docker api (required for ansible)"
+      pip:
+        name:
+          - docker
+          - docker-compose
+
+    - name: "run docker-compose up"
+      community.docker.docker_compose:
+        project_src: "{{ docker_compose_directory }}"
+        state: absent
+
+    - name: "install cron jobs"
+      cron:
+        name: "{{ item.name }}"
+        minute: "{{ item.minute|default(omit) }}"
+        hour: "{{ item.hour|default(omit) }}"
+        day: "{{ item.day|default(omit) }}"
+        weekday: "{{ item.weekday|default(omit) }}"
+        env: "{{ item.env|default(omit) }}"
+        job: "{{ item.job }}"
+        state: absent
+      loop:
+        - name: "duckdns script to automatically update dynamic dns"
+          minute: "*/5"
+          job: "{{ scripts_directory }}/duck.sh > /dev/null 2>&1"
+
+        - name: "healthcheck chicken is up"
+          minute: "*/5"
+          job: >
+            curl -fsS -m 10 --retry 5 -o /dev/null
+            https://hc-ping.com/c85e9821-8a0b-4529-92cc-ba067584ee2f
+
+        - name: "weekly docker pull and up"
+          minute: "00"
+          hour: "03"
+          weekday: "THU"
+          job: >
+            {{ scripts_directory }}/update_docker_containers.sh >
+            /dev/null 2>&1
+
+        - name: "auto clean up docker images and containers"
+          minute: "00"
+          hour: "03"
+          weekday: "FRI"
+          job: >
+            {{ scripts_directory }}/auto_clean_docker.sh
+            > /dev/null 2>&1
+
+        - name: "backup cron"
+          minute: "00"
+          hour: "01"
+          job: >
+            {{ scripts_directory }}/backup.sh
+            > /dev/null 2>&1
+
+        - name: "clean backup snapshots every month"
+          minute: "00"
+          hour: "06"
+          day: "1"
+          job: >
+            {{ scripts_directory }}/clean_old_restic_snapshots.sh
+            > /dev/null 2>&1
+
+    - name: "reloaded telegraf service"
+      systemd:
+        name: "telegraf"
+        daemon_reload: true
+        state: restarted
+
+  roles:
+    - role: geerlingguy.certbot
+    - role: geerlingguy.nginx
+    - role: jnv.unattended-upgrades

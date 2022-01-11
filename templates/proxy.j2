@@ -1,0 +1,28 @@
+server {
+    # http plain force redirect to https
+    if ($host = {{ item.server_name }}) {
+        return 301 https://$host$request_uri;
+    }
+
+    listen 80;
+    server_name {{ item.server_name }};
+
+    return 404;
+}
+
+server {
+    listen 443 ssl;
+    server_name {{ item.server_name }};
+
+    location / {
+        proxy_pass {{ item.proxy_host }};
+    }
+    ssl_certificate /etc/letsencrypt/live/{{ item.server_name }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ item.server_name }}/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+{% if item.extra_parameters is defined %}
+    {{ item.extra_parameters|indent(4) }}
+{% endif %}
+}

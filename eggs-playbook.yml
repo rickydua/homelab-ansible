@@ -1,0 +1,16 @@
+---
+- hosts: truenas
+  tasks:
+    - name: "sed conf files"
+      lineinfile:
+        path: "{{ item.path }}"
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+      loop:
+        - path: /usr/local/etc/pkg/repos/local.conf
+          regexp: "enabled: yes"
+          line: "    enabled: no"
+
+        - path: /usr/local/etc/pkg/repos/FreeBSD.conf
+          regexp: "enabled: no"
+          line: "    enabled: yes"

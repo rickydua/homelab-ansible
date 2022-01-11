@@ -1,0 +1,217 @@
+version: "3.6"
+
+services:
+  transmission:
+    image: linuxserver/transmission
+    restart: unless-stopped
+    container_name: transmission
+    ports:
+      - "9091:9091"
+      - "51413:51413"
+      - "51413:51413/udp"
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TIMEZONE}
+    volumes:
+      - "${DOWNLOAD}:/downloads"
+      - "${DOWNLOAD}/torrent_watch:/watch"
+      - "${CONFIG}/transmission:/config"
+
+  jackett:
+    image: linuxserver/jackett
+    restart: unless-stopped
+    container_name: jackett
+    ports:
+      - "9117:9117"
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TIMEZONE}
+    volumes:
+      - "${CONFIG}/Jackett:/config"
+      - "${DOWNLOAD}:/downloads"
+      - "/etc/localtime:/etc/localtime:ro"
+
+  plex:
+    image: linuxserver/plex
+    container_name: plex
+    network_mode: "host"
+    restart: unless-stopped
+    environment:
+      - VERSION=latest
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TIMEZONE}
+    volumes:
+      - "${CONFIG}/plexconfig:/config"
+      - "${TVSERIES}:/data/tvshows"
+      - "${MOVIES}:/data/movies"
+
+  hydra2:
+    image: ghcr.io/linuxserver/nzbhydra2
+    container_name: nzbhydra2
+    restart: unless-stopped
+    ports:
+      - "5076:5076"
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TIMEZONE}
+    volumes:
+      - "${DOWNLOAD}:/downloads"
+      - "${CONFIG}/hydra2:/config"
+
+  sabnzbd:
+    image: linuxserver/sabnzbd
+    container_name: sabnzbd
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TIMEZONE}
+    volumes:
+      - "${INCOMPLETE}:/incomplete-downloads"
+      - "${DOWNLOAD}:/downloads"
+      - "${CONFIG}/sabnzbd:/config"
+
+  radarr:
+    image: linuxserver/radarr
+    container_name: radarr
+    restart: unless-stopped
+    ports:
+      - "7878:7878"
+    depends_on:
+      - jackett
+      - transmission
+      - hydra2
+      - sabnzbd
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TIMEZONE}
+    volumes:
+      - "${CONFIG}/Radarr:/config"
+      - "${DOWNLOAD}:/downloads"
+      - "${MOVIES}:/movies"
+      - "/etc/localtime:/etc/localtime:ro"
+
+  sonarr:
+    image: linuxserver/sonarr
+    container_name: sonarr
+    restart: unless-stopped
+    ports:
+      - "8989:8989"
+    depends_on:
+      - jackett
+      - transmission
+      - hydra2
+      - sabnzbd
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TIMEZONE}
+    volumes:
+      - "${CONFIG}/NzbDrone:/config"
+      - "${DOWNLOAD}:/downloads"
+      - "${TVSERIES}:/tv"
+      - "/etc/localtime:/etc/localtime:ro"
+
+  overseerr:
+    image: lscr.io/linuxserver/overseerr
+    container_name: overseerr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    depends_on:
+      - plex
+      - radarr
+      - sonarr
+    volumes:
+      - ${CONFIG}/overseerr:/config
+    ports:
+      - 5055:5055
+    restart: unless-stopped
+
+  shaarli:
+    image: shaarli/shaarli:latest
+    container_name: shaarli
+    restart: unless-stopped
+    hostname: chicken-shaarli
+    ports:
+      - "28010:80"
+    volumes:
+      - "${ROOT_CHICKEN_EGGS_DIR}/data/shaarli-data:/var/www/shaarli/data:rw"
+      - "/etc/localtime:/etc/localtime:ro"
+
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=ricky
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_PASS}
+      - DOCKER_INFLUXDB_INIT_ORG=daut
+      - DOCKER_INFLUXDB_INIT_BUCKET=chicken
+    volumes:
+      - "${CONFIG}/influxdb2:/etc/influxdb2"
+      - "${INFLUXDB_DATA}:/var/lib/influxdb2"
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      GF_RENDERING_SERVER_URL: http://renderer:8081/render
+      GF_RENDERING_CALLBACK_URL: http://grafana:3000/
+      GF_LOG_FILTERS: rendering:debug
+    ports:
+      - "3000:3000"
+    volumes:
+      - "${CONFIG}/grafana:/var/lib/grafana"
+
+  renderer:
+    image: grafana/grafana-image-renderer:latest
+    ports:
+      - 8081
+
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "9000:80/tcp"
+      - "9001:443/tcp"
+    environment:
+      TZ: ${TIMEZONE}
+      WEBPASSWORD: "${PIHOLE_PASS}"
+    # Volumes store your data between container upgrades
+    volumes:
+      - ${CONFIG}/etc-pihole/:/etc/pihole/
+      - ${CONFIG}/etc-dnsmasq.d/:/etc/dnsmasq.d/
+    # Recommended but not required (DHCP needs NET_ADMIN)
+    #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped
+
+  #nextcloud:
+  #  image: ghcr.io/linuxserver/nextcloud
+  #  container_name: nextcloud
+  #  environment:
+  #    - PUID=${PUID}
+  #    - PGID=${PGID}
+  #    - TZ=${TIMEZONE}
+  #  volumes:
+  #    - ${CONFIG}/nextcloud:/config
+  #    - ${NEXTCLOUD_DIR}:/data
+  #  ports:
+  #    - 8081:443
+  #  restart: unless-stopped
