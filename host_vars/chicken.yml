@@ -24,8 +24,8 @@ nfs_share: /eggs
 nfs_mountpoint: /mnt/eggs
 
 # Backup drive to mount
-backup_mountpoint: /mnt/backup
-backup_device: /dev/sdb1
+# backup_mountpoint: /mnt/backup
+# backup_device: /dev/sdb1
 
 # influxdb host
 # from telegraf's machine's perpective
@@ -66,6 +66,7 @@ nginx_vhosts:
   - server_name: "grafana.rickyd.duckdns.org"
     filename: "grafana.rickyd.duckdns.org.conf"
     proxy_host: "http://{{ docker_host }}:3000"
+    extra_parameters: proxy_set_header Host $host
 
 # cerbot
 certbot_install_method: snap

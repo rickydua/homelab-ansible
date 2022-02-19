@@ -14,3 +14,44 @@
         - path: /usr/local/etc/pkg/repos/FreeBSD.conf
           regexp: "enabled: no"
           line: "    enabled: yes"
+
+    - name: "install restic"
+      community.general.pkgng:
+        name: restic
+
+    - name: "create directories"
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        mode: "{{ item.mode }}"
+      loop:
+        - path: "{{ scripts_directory }}"
+          mode: "0777"
+
+    - name: "copy unlock scripts over"
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - src: "./scripts/unlock_datasets.sh"
+          dest: "{{ scripts_directory }}"
+          mode: "777"
+        - src: "./scripts/unlock_datasets.py"
+          dest: "{{ scripts_directory }}"
+          mode: "777"
+        - src: "./scripts/functions.sh"
+          dest: "{{ scripts_directory }}"
+          mode: "777"
+        - src: "./scripts/unlock_main_bootstrap.sh"
+          dest: "{{ scripts_directory }}"
+          mode: "777"
+
+    - name: "template over files"
+      template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: 0644
+      loop:
+        - src: "./templates/truenas_env.sh.j2"
+          dest: "{{ scripts_directory }}/env.sh"

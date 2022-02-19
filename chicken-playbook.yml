@@ -15,19 +15,15 @@
           - influxdb_token is defined
           - ansible_user_id == "root"
 
-    - name: "add Docker & telegraph GPG key"
+    - name: "add Docker GPG key"
       apt_key:
         url: "{{ item.url }}"
-        state: present
         keyring: "{{ item.keyring }}"
       loop:
         - url: "https://download.docker.com/linux/{{ ansible_lsb.id|lower }}/gpg"
           keyring: "/usr/share/keyrings/docker-archive-keyring.gpg"
 
-        - url: "https://repos.influxdata.com/influxdb.key"
-          keyring: "/etc/apt/trusted.gpg.d/telegraf.gpg"
-
-    - name: "add docker & influx_telegraf repository"
+    - name: "add docker repository"
       apt_repository:
         filename: "{{ item.filename }}"
         repo: "{{ item.repo }}"
@@ -39,15 +35,20 @@
             https://download.docker.com/linux/{{ ansible_lsb.id|lower }}
             {{ ansible_lsb.codename|lower }} stable
 
-        - filename: "influx_telegraf"
-          repo: >-
-            deb https://repos.influxdata.com/{{ ansible_lsb.id|lower }}
-            {{ ansible_lsb.codename|lower }} stable
-
     - name: "update apt cache and upgrade"
       apt:
         update_cache: true
         upgrade: true
+
+    - name: "uninstall old version of docker"
+      apt:
+        name:
+          - docker
+          - docker-engine
+          - docker.io
+          - containerd
+          - runc
+        state: absent
 
   tasks:
     - name: "install packages"
@@ -65,7 +66,6 @@
           - docker-ce-cli
           - containerd.io
           - restic
-          - telegraf
 
     - name: "create directories"
       file:
@@ -80,12 +80,6 @@
           mode: "0755"
 
         - path: "{{ ansible_user_dir }}/restic"
-          mode: "0755"
-
-        - path: "{{ backup_mountpoint }}"
-          mode: "0755"
-
-        - path: "/etc/systemd/system/telegraf.service.d"
           mode: "0755"
 
     - name: "copy scripts and files over"
@@ -113,16 +107,10 @@
         - src: "./templates/excludes.txt.j2"
           dest: "{{ ansible_user_dir }}/restic/excludes.txt"
 
-        - src: "./templates/telegraf_env_vars.j2"
-          dest: "/etc/default/telegraf"
-
-        - src: "./templates/systemd.telegraf.override.confg.j2"
-          dest: "/etc/systemd/system/telegraf.service.d/override.conf"
-
         - src: "./templates/env.sh.j2"
           dest: "{{ ansible_user_dir }}/env.sh"
 
-    - name: "mount backup device and nfs"
+    - name: "mount nfs"
       mount:
         src: "{{ item.src }}"
         path: "{{ item.path }}"
@@ -132,10 +120,6 @@
         - src: "{{ nfs_host }}:{{ nfs_share }}"
           path: "{{ nfs_mountpoint }}"
           fstype: nfs
-
-        - src: "{{ backup_device }}"
-          path: "{{ backup_mountpoint }}"
-          fstype: ext4
 
     - name: "install docker api (required for ansible)"
       pip:
@@ -192,19 +176,13 @@
             {{ scripts_directory }}/backup.sh
             > /dev/null 2>&1
 
-        - name: "clean backup snapshots every month"
+        - name: "clean backup backup snapshots every month"
           minute: "00"
           hour: "06"
           day: "1"
           job: >
             {{ scripts_directory }}/clean_old_restic_snapshots.sh
             > /dev/null 2>&1
-
-    - name: "reloaded telegraf service"
-      systemd:
-        name: "telegraf"
-        daemon_reload: true
-        state: restarted
 
   roles:
     - role: geerlingguy.certbot
