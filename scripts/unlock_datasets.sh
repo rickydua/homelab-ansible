@@ -12,8 +12,9 @@ SCRIPTS_DIR=$(dirname "$0")
 
 export TRUENAS_API_TOKEN # export from `$SCRIPTS_DIR/env.sh`
 
+# shellcheck disable=SC2087
 ssh -o StrictHostKeyChecking=no root@"$PI_HOST" <<- EOF || echo "Vault already open, skipping..."
-    printf "***REMOVED***" | cryptsetup open /secure.img vault --key-file -
+    printf "$LUKS_PASS" | cryptsetup open /secure.img vault --key-file -
     mount /dev/mapper/vault /mnt/vault
 EOF
 

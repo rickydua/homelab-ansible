@@ -1,17 +1,17 @@
 #!/bin/sh
 
-# shellcheck source=../templates/env.sh.j2
-. "$HOME/env.sh"
+SCRIPTS_DIR=$(dirname "$0")
+
+# shellcheck source=../templates/truenas_env.sh.j2
+. "$SCRIPTS_DIR/env.sh"
+
+export RESTIC_REPOSITORY RESTIC_PASSWORD B2_ACCOUNT_ID B2_ACCOUNT_KEY
 
 # remove old backups
-restic forget --keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 2 --prune
-
-# Linux `bash` specific
-raw_random=$(head -n 200 /dev/urandom | cksum | cut -f 1 -d " ")
-random_group="$(( raw_random % 100 ))"
+restic forget --keep-daily 7 --keep-weekly 5 --prune
 
 # check integrity of backup
-restic check --read-data-subset="$random_group/100"
+restic check
 check_status="$?"
 
 if [ "$check_status" != "0" ]; then

@@ -12,7 +12,7 @@
 - All disks should be passthrough'ed to the truenas OS if running with HBA on metal machine (should be in IT mode)
 - Machine ofcource with VM support perferablly
 - Raspberrry PI (optional, if you don't want to type passphrase for dataset everytime truenas restarts)
-  - Luks container at `/secure.img` with passphrase `***REMOVED***`
+  - Luks container at `/secure.img` with passphrase
   - Dir `/mnt/vault` with `chmod 777`
   - `/mnt/vault/truenas_passphrase` file should exist with no newlines `\n` (use `printf`), which contains passphrase to unlock datasets in truenas
 

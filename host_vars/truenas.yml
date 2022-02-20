@@ -4,4 +4,8 @@ ansible_user: root
 # Pi host ip address
 pi_host: 192.168.1.33
 scripts_directory: /scripts
-truenas_api_token: "***REMOVED***"
+
+# Restic
+backblaze_repo: "b2:eggs-restic-backup:/repo"
+mountpoint: /mnt/tank/photos
+restic_directory: /restic

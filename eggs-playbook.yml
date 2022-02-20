@@ -1,5 +1,8 @@
 ---
 - hosts: truenas
+  vars_files:
+    - vars/secrets.yml
+
   tasks:
     - name: "sed conf files"
       lineinfile:
@@ -27,6 +30,8 @@
       loop:
         - path: "{{ scripts_directory }}"
           mode: "0777"
+        - path: "{{ restic_directory }}"
+          mode: "0755"
 
     - name: "copy unlock scripts over"
       copy:
@@ -46,12 +51,20 @@
         - src: "./scripts/unlock_main_bootstrap.sh"
           dest: "{{ scripts_directory }}"
           mode: "777"
+        - src: "./scripts/backup.sh"
+          dest: "{{ scripts_directory }}"
+          mode: "755"
+        - src: "./scripts/clean_old_restic_snapshots.sh"
+          dest: "{{ scripts_directory }}"
+          mode: "755"
 
     - name: "template over files"
       template:
         src: "{{ item.src }}"
         dest: "{{ item.dest }}"
-        mode: 0644
+        mode: "0644"
       loop:
         - src: "./templates/truenas_env.sh.j2"
           dest: "{{ scripts_directory }}/env.sh"
+        - src: "./templates/excludes.txt.j2"
+          dest: "{{ restic_directory }}/excludes.txt"

@@ -4,5 +4,3 @@
 *.bkp
 *.retry
 *.*~
-
-.secrets.json

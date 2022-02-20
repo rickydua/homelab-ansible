@@ -12,7 +12,6 @@
           - sudo_pass is defined
           - influxdb_pass is defined
           - pihole_pass is defined
-          - influxdb_token is defined
           - ansible_user_id == "root"
 
     - name: "add Docker GPG key"
