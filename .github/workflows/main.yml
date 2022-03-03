@@ -7,7 +7,9 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v2
 
-      - run: ls -ltr
+      - run: >
+          mkdir -p ~/.ansible &&
+          printf "${{ secrets.ANSIBLE_VAULT_PASS }}" > ~/.ansible/vault_pass
 
       - name: Install Task
         uses: arduino/setup-task@v1
