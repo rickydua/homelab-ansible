@@ -1,189 +1,33 @@
 ---
 - hosts: chicken
   become: true
-  vars_prompt:
-    - name: "restic_password"
-      prompt: "restic password?"
+  vars_files:
+    - vars/secrets.yml
 
   pre_tasks:
-    - name: "Check mandatory variables are defined"
+    - name: Check user is root
       assert:
         that:
-          - sudo_pass is defined
-          - influxdb_pass is defined
-          - pihole_pass is defined
           - ansible_user_id == "root"
 
-    - name: "add Docker GPG key"
-      apt_key:
-        url: "{{ item.url }}"
-        keyring: "{{ item.keyring }}"
-      loop:
-        - url: "https://download.docker.com/linux/{{ ansible_lsb.id|lower }}/gpg"
-          keyring: "/usr/share/keyrings/docker-archive-keyring.gpg"
+    - include_tasks: tasks/nginx_assert.yml
 
-    - name: "add docker repository"
-      apt_repository:
-        filename: "{{ item.filename }}"
-        repo: "{{ item.repo }}"
-      loop:
-        - filename: "docker"
-          repo: >-
-            deb
-            [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg]
-            https://download.docker.com/linux/{{ ansible_lsb.id|lower }}
-            {{ ansible_lsb.codename|lower }} stable
-
-    - name: "update apt cache and upgrade"
+    - name: Update apt cache and upgrade
       apt:
         update_cache: true
         upgrade: true
 
-    - name: "uninstall old version of docker"
-      apt:
-        name:
-          - docker
-          - docker-engine
-          - docker.io
-          - containerd
-          - runc
-        state: absent
-
-  tasks:
-    - name: "install packages"
-      apt:
-        name:
-          - qemu-guest-agent
-          - nfs-common
-          - lsb-release
-          - gnupg
-          - curl
-          - ca-certificates
-          - htop
-          - python3-pip
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-          - restic
-
-    - name: "create directories"
-      file:
-        path: "{{ item.path }}"
-        state: directory
-        mode: "{{ item.mode }}"
-      loop:
-        - path: "{{ nfs_mountpoint }}"
-          mode: "0777"
-
-        - path: "{{ docker_compose_directory }}"
-          mode: "0755"
-
-        - path: "{{ ansible_user_dir }}/restic"
-          mode: "0755"
-
-    - name: "copy scripts and files over"
-      copy:
-        src: "{{ item.src }}"
-        dest: "{{ item.dest }}"
-        mode: "{{ item.mode }}"
-      loop:
-        - src: "./files/docker-compose.yml"
-          dest: "{{ docker_compose_directory }}/docker-compose.yml"
-          mode: "0644"
-        - src: "./scripts/"
-          dest: "{{ scripts_directory }}"
-          mode: "0755"
-
-    - name: "template over files"
-      template:
-        src: "{{ item.src }}"
-        dest: "{{ item.dest }}"
-        mode: 0644
-      loop:
-        - src: "./templates/docker-compose.env.j2"
-          dest: "{{ docker_compose_directory }}/.env"
-
-        - src: "./templates/excludes.txt.j2"
-          dest: "{{ ansible_user_dir }}/restic/excludes.txt"
-
-        - src: "./templates/env.sh.j2"
-          dest: "{{ ansible_user_dir }}/env.sh"
-
-    - name: "mount nfs"
-      mount:
-        src: "{{ item.src }}"
-        path: "{{ item.path }}"
-        fstype: "{{ item.fstype }}"
-        state: mounted
-      loop:
-        - src: "{{ nfs_host }}:{{ nfs_share }}"
-          path: "{{ nfs_mountpoint }}"
-          fstype: nfs
-
-    - name: "install docker api (required for ansible)"
-      pip:
-        name:
-          - docker
-          - docker-compose
-
-    - name: "run docker-compose up"
-      community.docker.docker_compose:
-        project_src: "{{ docker_compose_directory }}"
-        state: absent
-
-    - name: "install cron jobs"
-      cron:
-        name: "{{ item.name }}"
-        minute: "{{ item.minute|default(omit) }}"
-        hour: "{{ item.hour|default(omit) }}"
-        day: "{{ item.day|default(omit) }}"
-        weekday: "{{ item.weekday|default(omit) }}"
-        env: "{{ item.env|default(omit) }}"
-        job: "{{ item.job }}"
-        state: absent
-      loop:
-        - name: "duckdns script to automatically update dynamic dns"
-          minute: "*/5"
-          job: "{{ scripts_directory }}/duck.sh > /dev/null 2>&1"
-
-        - name: "healthcheck chicken is up"
-          minute: "*/5"
-          job: >
-            curl -fsS -m 10 --retry 5 -o /dev/null
-            https://hc-ping.com/c85e9821-8a0b-4529-92cc-ba067584ee2f
-
-        - name: "weekly docker pull and up"
-          minute: "00"
-          hour: "03"
-          weekday: "THU"
-          job: >
-            {{ scripts_directory }}/update_docker_containers.sh >
-            /dev/null 2>&1
-
-        - name: "auto clean up docker images and containers"
-          minute: "00"
-          hour: "03"
-          weekday: "FRI"
-          job: >
-            {{ scripts_directory }}/auto_clean_docker.sh
-            > /dev/null 2>&1
-
-        - name: "backup cron"
-          minute: "00"
-          hour: "01"
-          job: >
-            {{ scripts_directory }}/backup.sh
-            > /dev/null 2>&1
-
-        - name: "clean backup backup snapshots every month"
-          minute: "00"
-          hour: "06"
-          day: "1"
-          job: >
-            {{ scripts_directory }}/clean_old_restic_snapshots.sh
-            > /dev/null 2>&1
-
   roles:
+    - role: nfs
+    - role: docker
     - role: geerlingguy.certbot
     - role: geerlingguy.nginx
     - role: jnv.unattended-upgrades
+    - role: cron
+
+  tasks:
+    - name: "Install misc packages"
+      apt:
+        name:
+          - htop
+          - qemu-guest-agent

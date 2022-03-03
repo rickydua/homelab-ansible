@@ -1,0 +1,5 @@
+exclude_paths:
+  - ~/.ansible/roles
+  - ./files
+
+use_default_rules: true

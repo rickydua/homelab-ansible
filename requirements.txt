@@ -1,2 +1,5 @@
-ansible-lint[yamllint]
+ansible
+ansible-lint
+yamllint
+shellcheck-py
 black

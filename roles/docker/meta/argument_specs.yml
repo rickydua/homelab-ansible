@@ -1,0 +1,12 @@
+---
+argument_specs:
+  main:
+    short_description: Required args for this role
+    options:
+      influxdb_pass:
+        type: str
+        required: true
+
+      pihole_pass:
+        type: str
+        required: true

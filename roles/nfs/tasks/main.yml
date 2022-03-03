@@ -1,0 +1,18 @@
+---
+- name: Instal nfs package
+  apt:
+    name: nfs-common
+    update_cache: true
+
+- name: "Ensure {{ nfs_mountpoint }} exists"
+  file:
+    path: "{{ nfs_mountpoint }}"
+    state: directory
+    mode: "0777"
+
+- name: Mount nfs
+  mount:
+    src: "{{ nfs_host }}:{{ nfs_share }}"
+    path: "{{ nfs_mountpoint }}"
+    fstype: "nfs"
+    state: mounted

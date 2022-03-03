@@ -1,0 +1,56 @@
+---
+- name: "Copy scrips over to {{ scripts_directory }}"
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "0755"
+  loop:
+    - src: scripts/duck.sh
+      dest: "{{ scripts_directory }}"
+
+    - src: scripts/update_docker_containers.sh
+      dest: "{{ scripts_directory }}"
+
+    - src: scripts/auto_clean_docker.sh
+      dest: "{{ scripts_directory }}"
+
+- name: Install cron jobs
+  cron:
+    name: "{{ item.name }}"
+    minute: "{{ item.minute|default(omit) }}"
+    hour: "{{ item.hour|default(omit) }}"
+    day: "{{ item.day|default(omit) }}"
+    weekday: "{{ item.weekday|default(omit) }}"
+    env: "{{ item.env|default(omit) }}"
+    job: "{{ item.job }}"
+    state: "{{ cron_state }}"
+  loop:
+    - name: DOCKER_COMPOSE
+      env: true
+      job: "{{ docker_compose_directory }}"
+
+    - name: duckdns script to automatically update dynamic dns"
+      minute: "*/5"
+      job: "{{ scripts_directory }}/duck.sh > /dev/null 2>&1"
+
+    - name: healthcheck chicken is up
+      minute: "*/5"
+      job: >
+        curl -fsS -m 10 --retry 5 -o /dev/null
+        https://hc-ping.com/c85e9821-8a0b-4529-92cc-ba067584ee2f
+
+    - name: weekly docker pull and up
+      minute: "00"
+      hour: "03"
+      weekday: "THU"
+      job: >
+        {{ scripts_directory }}/update_docker_containers.sh >
+        /dev/null 2>&1
+
+    - name: auto clean up docker images and containers
+      minute: "00"
+      hour: "03"
+      weekday: "FRI"
+      job: >
+        {{ scripts_directory }}/auto_clean_docker.sh
+        > /dev/null 2>&1

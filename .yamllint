@@ -1,0 +1,4 @@
+---
+ignore: |
+  vars/secrets.yml
+  .travis.yml

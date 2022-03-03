@@ -1,0 +1,7 @@
+---
+# defaults vars for docker
+docker_compose_directory: /docker
+docker_compose_state: absent
+
+# Used in docker-compose.env.j2 file
+nfs_mountpoint: /mnt/eggs

@@ -1,0 +1,15 @@
+---
+# https://taskfile.dev
+version: "3"
+
+tasks:
+  bootstrap:
+    cmds:
+      - pip3 install -r ./requirements.txt
+      - ansible-galaxy install -r ./requirements.yml
+    silent: true
+
+  lint:
+    cmds:
+      - find . \( -name "*.yml" -o -name "*.yaml" \) -a -exec yamllint "{}" +;
+      - ansible-lint eggs-playbook.yml chicken-playbook.yml

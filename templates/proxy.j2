@@ -16,6 +16,10 @@ server {
 
     location / {
         proxy_pass {{ item.proxy_host }};
+        {% if item.extra_proxy_parameters is defined %}
+            {{ item.extra_proxy_parameters }}
+        {% endif %}
+
     }
     ssl_certificate /etc/letsencrypt/live/{{ item.server_name }}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/{{ item.server_name }}/privkey.pem;

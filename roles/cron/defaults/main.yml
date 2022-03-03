@@ -1,0 +1,5 @@
+---
+docker_compose_directory: /docker
+scripts_directory: /scripts
+
+cron_state: absent

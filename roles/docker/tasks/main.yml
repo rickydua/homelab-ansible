@@ -1,0 +1,66 @@
+---
+- name: Add docker GPG key
+  apt_key:
+    url: "https://download.docker.com/linux/{{ ansible_lsb.id|lower }}/gpg"
+    keyring: /usr/share/keyrings/docker-archive-keyring.gpg
+
+- name: Add docker repository
+  apt_repository:
+    filename: "docker"
+    repo: >-
+      deb
+      [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg]
+      https://download.docker.com/linux/{{ ansible_lsb.id|lower }}
+      {{ ansible_lsb.codename|lower }} stable
+
+- name: Uninstall old versions of docker
+  apt:
+    name:
+      - docker
+      - docker-engine
+      - docker.io
+      - containerd
+      - runc
+    state: absent
+
+- name: Install docker and prerequisite packages
+  apt:
+    update_cache: true
+    name:
+      - lsb-release
+      - gnupg
+      - curl
+      - ca-certificates
+      - python3-pip
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+
+- name: Install docker api for python (required for ansible)
+  pip:
+    name:
+      - docker
+      - docker-compose
+
+- name: "Ensure {{ docker_compose_directory }} exists"
+  file:
+    name: "{{ docker_compose_directory }}"
+    state: directory
+    mode: "0755"
+
+- name: Copy docker-compose.yml file over
+  copy:
+    src: docker-compose.yml
+    dest: "{{ docker_compose_directory }}/docker-compose.yml"
+    mode: "0644"
+
+- name: Template over docker-compose.env.j2 file
+  template:
+    src: docker-compose.env.j2
+    dest: "{{ docker_compose_directory }}/.env"
+    mode: "0644"
+
+- name: "Run docker-compose with {{ docker_compose_state }}"
+  community.docker.docker_compose:
+    project_src: "{{ docker_compose_directory }}"
+    state: "{{ docker_compose_state }}"
