@@ -1,0 +1,9 @@
+name: Build
+on: [push]
+jobs:
+  bootstrap_and_lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+        run: ls -ltr

@@ -13,3 +13,5 @@ tasks:
     cmds:
       - find . \( -name "*.yml" -o -name "*.yaml" \) -a -exec yamllint "{}" +;
       - ansible-lint eggs-playbook.yml chicken-playbook.yml
+      - cd scripts && shellcheck *.sh
+      - black --check scripts/*.py
