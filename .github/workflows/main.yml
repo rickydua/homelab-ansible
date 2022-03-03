@@ -13,3 +13,5 @@ jobs:
         uses: arduino/setup-task@v1
 
       - run: task bootstrap
+
+      - run: task lint
