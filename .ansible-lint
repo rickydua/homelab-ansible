@@ -1,3 +1,6 @@
+skip_list:
+  - 'fqcn-builtins'
+
 exclude_paths:
   - ~/.ansible/roles
   - ./files
