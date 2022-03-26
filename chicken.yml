@@ -10,7 +10,8 @@
         that:
           - ansible_user_id == "root"
 
-    - include_tasks: tasks/nginx_assert.yml
+    - name: Load vars based on OS type
+      include_vars: "vars/unattended_upgrades_{{ ansible_distribution | lower }}.yml"
 
     - name: Update apt cache and upgrade
       apt:
@@ -19,9 +20,8 @@
 
   roles:
     - role: nfs
+    - role: iscsi
     - role: docker
-    - role: geerlingguy.certbot
-    - role: geerlingguy.nginx
     - role: jnv.unattended-upgrades
     - role: cron
 

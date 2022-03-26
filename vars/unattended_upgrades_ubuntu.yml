@@ -1,0 +1,8 @@
+---
+# unattended upgrades
+unattended_automatic_reboot: true
+unattended_origins_patterns:
+  - "o=Docker,a={{ ansible_lsb.codename }},l=Docker CE,c=stable"
+  - "origin={{ ansible_lsb.id }},archive=${distro_codename}"
+  - "origin={{ ansible_lsb.id }},archive=${distro_codename}-updates"
+  - "origin={{ ansible_lsb.id }},archive=${distro_codename}-security"

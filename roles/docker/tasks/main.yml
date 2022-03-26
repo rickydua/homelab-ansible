@@ -1,4 +1,9 @@
 ---
+- name: Install gnupg package
+  apt:
+    update_cache: true
+    name: gnupg
+
 - name: Add docker GPG key
   apt_key:
     url: "https://download.docker.com/linux/{{ ansible_lsb.id|lower }}/gpg"

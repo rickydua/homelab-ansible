@@ -8,7 +8,7 @@ import os
 import sys
 import json
 
-list_of_datasets = ["tank/encr"]
+list_of_datasets = ["farm/eggs/docs"]
 
 if len(sys.argv) == 1:
     print("need truenas_passphrase")

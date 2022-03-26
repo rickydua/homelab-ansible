@@ -3,12 +3,14 @@ argument_specs:
   main:
     short_description: Required args for this role
     options:
-      nfs_host:
+      iscsi_host:
         type: str
         required: true
-      nfs_share:
+
+      iscsi_target_name:
         type: str
         required: true
-      nfs_mountpoint:
+
+      iscsi_config_directory:
         type: str
         required: true

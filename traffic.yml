@@ -1,0 +1,33 @@
+---
+- hosts: traffic
+  become: true
+  vars_files:
+    - vars/secrets.yml
+
+  pre_tasks:
+    - name: Check user is root
+      assert:
+        that:
+          - ansible_user_id == "root"
+
+    - name: Load vars based on OS type
+      include_vars: "vars/unattended_upgrades_{{ ansible_distribution|lower }}.yml"
+
+    - include_tasks: tasks/nginx_assert.yml
+
+    - name: Update apt cache and upgrade
+      apt:
+        update_cache: true
+        upgrade: true
+
+  roles:
+    - role: geerlingguy.certbot
+    - role: geerlingguy.nginx
+    - role: jnv.unattended-upgrades
+
+  tasks:
+    - name: "Install misc packages"
+      apt:
+        name:
+          - htop
+          - qemu-guest-agent

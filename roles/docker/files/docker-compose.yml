@@ -3,7 +3,7 @@ version: "3.6"
 
 services:
   transmission:
-    image: linuxserver/transmission
+    image: lscr.io/linuxserver/transmission
     restart: unless-stopped
     container_name: transmission
     ports:
@@ -20,7 +20,7 @@ services:
       - "${CONFIG}/transmission:/config"
 
   jackett:
-    image: linuxserver/jackett
+    image: lscr.io/linuxserver/jackett
     restart: unless-stopped
     container_name: jackett
     ports:
@@ -35,12 +35,12 @@ services:
       - "/etc/localtime:/etc/localtime:ro"
 
   plex:
-    image: linuxserver/plex
+    image: lscr.io/linuxserver/plex
     container_name: plex
     network_mode: "host"
     restart: unless-stopped
     environment:
-      - VERSION=latest
+      - VERSION=docker
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TIMEZONE}
@@ -64,7 +64,7 @@ services:
       - "${CONFIG}/hydra2:/config"
 
   sabnzbd:
-    image: linuxserver/sabnzbd
+    image: lscr.io/linuxserver/sabnzbd
     container_name: sabnzbd
     restart: unless-stopped
     ports:
@@ -79,7 +79,7 @@ services:
       - "${CONFIG}/sabnzbd:/config"
 
   radarr:
-    image: linuxserver/radarr
+    image: lscr.io/linuxserver/radarr
     container_name: radarr
     restart: unless-stopped
     ports:
@@ -100,7 +100,7 @@ services:
       - "/etc/localtime:/etc/localtime:ro"
 
   sonarr:
-    image: linuxserver/sonarr
+    image: lscr.io/linuxserver/sonarr
     container_name: sonarr
     restart: unless-stopped
     ports:

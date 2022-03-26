@@ -10,3 +10,11 @@ argument_specs:
       pihole_pass:
         type: str
         required: true
+
+      nfs_mountpoint:
+        type: str
+        required: true
+
+      iscsi_config_directory:
+        type: str
+        required: true

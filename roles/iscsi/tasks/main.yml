@@ -1,0 +1,76 @@
+---
+- name: Install open-iscsi and parted packages
+  apt:
+    name:
+      - open-iscsi
+      - parted
+
+- name: Perform a discovery on eggs
+  community.general.open_iscsi:
+    show_nodes: true
+    discover: true
+    ip: "{{ iscsi_host }}"
+  register: iscsi_result
+
+- name: Find iscsi devices
+  find:
+    paths: /dev/disk/by-path/
+    patterns: '^ip-\d\d?\d?\.\d\d?\d?\.\d\d?\d?\.\d\d?\d?:.*?:{{ iscsi_target_name }}'
+    file_type: any
+    use_regex: true
+  register: devices
+
+- name: Set facts
+  set_fact:
+    iscsi_device0: >-
+      {{
+        devices['files']
+        |
+        selectattr('path', 'search', iscsi_target_name + '-lun-0$')
+        |
+        map(attribute='path') | first
+      }}
+    iscsi_device1: >-
+      {{
+        devices['files']
+        |
+        selectattr('path', 'search', iscsi_target_name + '-lun-0.*?part1$')
+        |
+        map(attribute='path') | first
+      }}
+  when: devices['files'] | length > 0
+
+- name: Connect to the named target
+  community.general.open_iscsi:
+    auto_node_startup: true
+    auto_portal_startup: true
+    login: true
+    target: "{{ iscsi_result['nodes'][0] }}"
+  when: >-
+    iscsi_device0 is not defined
+    and iscsi_device1 is not defined
+    and (iscsi_result['nodes'] | length > 0)
+    and (iscsi_target_name in ['nodes'][0])
+
+- name: Read whole device information
+  community.general.parted:
+    device: "{{ iscsi_device0 }}"
+  register: iscsi_device
+  when: iscsi_device0 is defined
+
+- name: "Create {{ iscsi_config_directory }}"
+  file:
+    path: "{{ iscsi_config_directory }}"
+    state: directory
+    mode: "0755"
+
+- name: Mount docker config iSCSI device
+  mount:
+    src: "{{ iscsi_device1 }}"
+    path: "{{ iscsi_config_directory }}"
+    fstype: ext4
+    opts: noauto,x-systemd.automount
+    state: mounted
+  when: >-
+    iscsi_device1 is defined
+    and iscsi_device['partitions'][0]['fstype'] == 'ext4'

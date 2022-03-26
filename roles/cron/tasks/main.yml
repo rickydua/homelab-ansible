@@ -1,4 +1,10 @@
 ---
+- name: Create {{ scripts_directory }}
+  file:
+    name: "{{ scripts_directory }}"
+    state: directory
+    mode: "0755"
+
 - name: "Copy scrips over to {{ scripts_directory }}"
   copy:
     src: "{{ item.src }}"

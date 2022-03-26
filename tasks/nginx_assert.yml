@@ -1,4 +1,10 @@
 ---
+- name: "Ensure /etc/letsencrypt exists"
+  file:
+    name: "/etc/letsencrypt"
+    state: directory
+    mode: "0755"
+
 - name: Ensure options-ssl-nginx.conf and ssl-dhparams.pem exists
   get_url:
     url: "{{ item.url }}"

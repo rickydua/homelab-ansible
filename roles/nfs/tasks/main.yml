@@ -15,4 +15,5 @@
     src: "{{ nfs_host }}:{{ nfs_share }}"
     path: "{{ nfs_mountpoint }}"
     fstype: "nfs"
+    opts: noauto,x-systemd.automount,nfsvers=4.1
     state: mounted

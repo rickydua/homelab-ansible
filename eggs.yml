@@ -1,28 +1,28 @@
 ---
-- hosts: truenas
+- hosts: eggs
   vars_files:
     - vars/secrets.yml
 
   tasks:
-    - name: "sed conf files"
-      lineinfile:
-        path: "{{ item.path }}"
-        regexp: "{{ item.regexp }}"
-        line: "{{ item.line }}"
-      loop:
-        - path: /usr/local/etc/pkg/repos/local.conf
-          regexp: "enabled: yes"
-          line: "    enabled: no"
+    - name: Wget restic into temp
+      get_url:
+        url: https://github.com/restic/restic/releases/download/v0.12.1/restic_0.12.1_freebsd_amd64.bz2
+        dest: /tmp/restic.bz2
 
-        - path: /usr/local/etc/pkg/repos/FreeBSD.conf
-          regexp: "enabled: no"
-          line: "    enabled: yes"
+    - name: Unzip restic
+      command:
+        cmd: bzip2 -k -d restic.bz2
+        creates: restic
+        chdir: /tmp
 
-    - name: "install restic"
-      community.general.pkgng:
-        name: restic
+    - name: Move unzipped restic exe to /usr/local/bin
+      copy:
+        src: /tmp/restic
+        dest: /usr/local/bin
+        mode: "0755"
+        remote_src: true
 
-    - name: "create directories"
+    - name: Create directories
       file:
         path: "{{ item.path }}"
         state: directory
@@ -33,7 +33,7 @@
         - path: "{{ restic_directory }}"
           mode: "0755"
 
-    - name: "copy unlock scripts over"
+    - name: Copy unlock scripts over
       copy:
         src: "{{ item.src }}"
         dest: "{{ item.dest }}"
@@ -58,7 +58,7 @@
           dest: "{{ scripts_directory }}"
           mode: "755"
 
-    - name: "template over files"
+    - name: Template over files
       template:
         src: "{{ item.src }}"
         dest: "{{ item.dest }}"
