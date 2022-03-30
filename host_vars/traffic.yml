@@ -44,6 +44,10 @@ nginx_vhosts:
     proxy_host: "http://{{ docker_host }}:3000"
     extra_proxy_parameters: proxy_set_header Host $host;
 
+  - server_name: "overserr.rickyd.duckdns.org"
+    filename: "overserr.rickyd.duckdns.org.conf"
+    proxy_host: "http://{{ docker_host }}:5055"
+
 # certbot
 certbot_install_method: snap
 certbot_create_if_missing: true
@@ -58,3 +62,5 @@ certbot_certs:
       - shaarli.rickyd.duckdns.org
   - domains:
       - grafana.rickyd.duckdns.org
+  - domains:
+      - overserr.rickyd.duckdns.org

@@ -1,5 +1,5 @@
 ---
-docker_compose_state: absent
+docker_compose_state: present
 
 # NFS
 nfs_host: "{{ hostvars['eggs']['ansible_host'] }}"
@@ -11,5 +11,5 @@ cron_state: present
 
 # iSCSI
 iscsi_host: "{{ hostvars['eggs']['ansible_host'] }}"
-iscsi_target_name: dconfig
+iscsi_target_name: dconfig2
 iscsi_config_directory: /mnt/configs

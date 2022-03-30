@@ -5,12 +5,27 @@
       - open-iscsi
       - parted
 
+- name: Set mounts facts, get current {{ iscsi_config_directory }} mount
+  set_fact:
+    config_mount_result: "{{ ansible_mounts | selectattr('mount', 'equalto', iscsi_config_directory) | list }}"
+
 - name: Perform a discovery on eggs
   community.general.open_iscsi:
     show_nodes: true
     discover: true
     ip: "{{ iscsi_host }}"
+  when: config_mount_result | length == 0
   register: iscsi_result
+
+- name: Connect to the named target
+  community.general.open_iscsi:
+    auto_node_startup: true
+    login: true
+    target: "{{ iscsi_result['nodes'] | select('search', iscsi_target_name + '$') | first }}"
+  when: >-
+    config_mount_result | length == 0
+    and (iscsi_result['nodes'] | length > 0)
+    and (iscsi_result['nodes'] | select('search', iscsi_target_name + '$') | list | length > 0)
 
 - name: Find iscsi devices
   find:
@@ -40,18 +55,6 @@
       }}
   when: devices['files'] | length > 0
 
-- name: Connect to the named target
-  community.general.open_iscsi:
-    auto_node_startup: true
-    auto_portal_startup: true
-    login: true
-    target: "{{ iscsi_result['nodes'][0] }}"
-  when: >-
-    iscsi_device0 is not defined
-    and iscsi_device1 is not defined
-    and (iscsi_result['nodes'] | length > 0)
-    and (iscsi_target_name in ['nodes'][0])
-
 - name: Read whole device information
   community.general.parted:
     device: "{{ iscsi_device0 }}"
@@ -69,8 +72,9 @@
     src: "{{ iscsi_device1 }}"
     path: "{{ iscsi_config_directory }}"
     fstype: ext4
-    opts: noauto,x-systemd.automount
+    opts: defaults,_netdev,x-systemd.requires=iscsi.service
     state: mounted
   when: >-
     iscsi_device1 is defined
+    and iscsi_device['partitions'] | length > 0
     and iscsi_device['partitions'][0]['fstype'] == 'ext4'
