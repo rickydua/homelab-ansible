@@ -26,8 +26,30 @@
     - role: cron
 
   tasks:
-    - name: "Install misc packages"
+    - name: Install misc packages
       apt:
         name:
           - htop
           - qemu-guest-agent
+
+    - name: Create fstrim.timer.d directory
+      file:
+        path: /etc/systemd/system/fstrim.timer.d
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: Template over fstimer.systemd.j2
+      template:
+        src: ./templates/fstimer.systemd.j2
+        dest: /etc/systemd/system/fstrim.timer.d/override.conf
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Restart fstrim.timer
+      systemd:
+        daemon_reload: true
+        state: restarted
+        name: fstrim.timer
