@@ -1,5 +1,6 @@
 ---
 - hosts: chicken
+  name: Setup chicken host box
   become: true
   vars_files:
     - vars/secrets.yml

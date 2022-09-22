@@ -11,7 +11,7 @@
           - ansible_user_id == "root"
 
     - name: Load vars based on OS type
-      include_vars: "vars/unattended_upgrades_{{ ansible_distribution|lower }}.yml"
+      include_vars: "vars/unattended_upgrades_{{ ansible_distribution | lower }}.yml"
 
     - include_tasks: tasks/nginx_assert.yml
 

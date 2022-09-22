@@ -1,5 +1,6 @@
 ---
 - hosts: eggs
+  name: Setup eggs truenas box
   vars_files:
     - vars/secrets.yml
 
@@ -7,6 +8,7 @@
     - name: Wget restic into temp
       get_url:
         url: https://github.com/restic/restic/releases/download/v0.12.1/restic_0.12.1_freebsd_amd64.bz2
+        mode: 0644
         dest: /tmp/restic.bz2
 
     - name: Unzip restic
