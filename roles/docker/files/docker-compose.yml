@@ -164,6 +164,20 @@ services:
       - "${CONFIG}/influxdb2:/etc/influxdb2"
       - "${INFLUXDB_DATA}:/var/lib/influxdb2"
 
+  heimdall:
+    image: lscr.io/linuxserver/heimdall:latest
+    container_name: heimdall
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+    volumes:
+      - ${CONFIG}/heimdall:/config
+    ports:
+      - 8009:80
+      - 8010:443
+    restart: unless-stopped
+
   # grafana:
   #   image: grafana/grafana
   #   container_name: grafana
