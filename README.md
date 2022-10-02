@@ -1,6 +1,6 @@
 # Setting/Restoring Homelab from scratch
 
-![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/rickydua/homelab-ansible/Build/master?style=for-the-badge)
+[![Build](https://github.com/rickydua/homelab-ansible/actions/workflows/main.yml/badge.svg)](https://github.com/rickydua/homelab-ansible/actions/workflows/main.yml)
 
 ## Setting up control node
 
