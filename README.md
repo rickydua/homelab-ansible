@@ -1,6 +1,6 @@
 # Setting/Restoring Homelab from scratch
 
-[![Build](https://github.com/rickydua/homelab-ansible/actions/workflows/main.yml/badge.svg)](https://github.com/rickydua/homelab-ansible/actions/workflows/main.yml)
+[![Build](https://github.com/rickydua/homelab-ansible/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/rickydua/homelab-ansible/actions/workflows/main.yml)
 
 ## Setting up control node
 
