@@ -5,7 +5,7 @@
       - open-iscsi
       - parted
 
-- name: Set mounts facts, get current {{ iscsi_config_directory }} mount
+- name: "Set mounts facts, get mount: {{ iscsi_config_directory }}"
   set_fact:
     config_mount_result: "{{ ansible_mounts | selectattr('mount', 'equalto', iscsi_config_directory) | list }}"
 

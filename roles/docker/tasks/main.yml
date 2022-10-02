@@ -47,7 +47,7 @@
       - docker
       - docker-compose
 
-- name: "Ensure {{ docker_compose_directory }} exists"
+- name: "Ensure directory exists: {{ docker_compose_directory }}"
   file:
     name: "{{ docker_compose_directory }}"
     state: directory
