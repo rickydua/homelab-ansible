@@ -11,12 +11,11 @@ If you need to setup up a new control node from scratch (new laptop maybe)
 ### Requirements
 
 - [taskfile](https://taskfile.dev/#/installation), `python3` and `pip3` should be installed
-- Python user `bin` directory should be in `PATH`
-  - For MacOS path is `~/Library/Python/{python version}/bin`
 
 ### Steps
 
 - ```sh
+  # Bootstrap
   git clone git@github.com:rickydua/homelab-ansible.git && \
   cd homelab-ansible && \
   task bootstrap
@@ -111,4 +110,4 @@ If you have setup Raspberry PI with above instructions, you can use it to unlock
   - [host_vars/traffic.yml](host_vars/traffic.yml)
   - [vars/secrets.yml](vars/secrets.yml)
   - [host_vars/chicken.yml](host_vars/chicken.yml)
-- Run `ansible-playbook site.yml`
+- Run `task chicken.yml && task traffic.yml`

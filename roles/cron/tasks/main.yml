@@ -23,11 +23,11 @@
 - name: Install cron jobs
   cron:
     name: "{{ item.name }}"
-    minute: "{{ item.minute|default(omit) }}"
-    hour: "{{ item.hour|default(omit) }}"
-    day: "{{ item.day|default(omit) }}"
-    weekday: "{{ item.weekday|default(omit) }}"
-    env: "{{ item.env|default(omit) }}"
+    minute: "{{ item.minute | default(omit) }}"
+    hour: "{{ item.hour | default(omit) }}"
+    day: "{{ item.day | default(omit) }}"
+    weekday: "{{ item.weekday | default(omit) }}"
+    env: "{{ item.env | default(omit) }}"
     job: "{{ item.job }}"
     state: "{{ cron_state }}"
   loop:

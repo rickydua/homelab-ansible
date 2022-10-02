@@ -1,5 +1,6 @@
 ---
 galaxy_info:
+  role_name: cron
   author: Ricky Dua
   description: Installs cron jobs on root user
 
@@ -14,7 +15,7 @@ galaxy_info:
         - focal
         - bionic
 
-  min_ansible_version: 2.1
+  min_ansible_version: "2.1"
 
   galaxy_tags: []
 

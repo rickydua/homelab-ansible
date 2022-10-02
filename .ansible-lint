@@ -1,9 +1,9 @@
 skip_list:
-  - 'fqcn-builtins'
-  - 'name[play]'
+  - "fqcn-builtins"
+  - "name[play]"
 
 exclude_paths:
-  - ./roles
+  - ./ansible-roles
   - ~/.ansible/roles
   - /usr/share/ansible/roles
   - /etc/ansible/roles

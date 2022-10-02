@@ -168,9 +168,9 @@ services:
     image: lscr.io/linuxserver/heimdall:latest
     container_name: heimdall
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/London
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ={TIMEZONE}
     volumes:
       - ${CONFIG}/heimdall:/config
     ports:
@@ -178,55 +178,18 @@ services:
       - 8010:443
     restart: unless-stopped
 
-  # grafana:
-  #   image: grafana/grafana
-  #   container_name: grafana
-  #   restart: unless-stopped
-  #   environment:
-  #     GF_RENDERING_SERVER_URL: http://renderer:8081/render
-  #     GF_RENDERING_CALLBACK_URL: http://grafana:3000/
-  #     GF_LOG_FILTERS: rendering:debug
-  #   ports:
-  #     - "3000:3000"
-  #   volumes:
-  #     - "${CONFIG}/grafana:/var/lib/grafana"
-
-  # renderer:
-  #   image: grafana/grafana-image-renderer:latest
-  #   ports:
-  #     - 8081
-
-  # pihole:
-  #   container_name: pihole
-  #   image: pihole/pihole:latest
-  #   ports:
-  #     - "53:53/tcp"
-  #     - "53:53/udp"
-  #     - "9000:80/tcp"
-  #     - "9001:443/tcp"
-  #   environment:
-  #     TZ: ${TIMEZONE}
-  #     WEBPASSWORD: "${PIHOLE_PASS}"
-  #   # Volumes store your data between container upgrades
-  #   volumes:
-  #     - ${CONFIG}/etc-pihole/:/etc/pihole/
-  #     - ${CONFIG}/etc-dnsmasq.d/:/etc/dnsmasq.d/
-  #   # Recommended but not required (DHCP needs NET_ADMIN)
-  #   #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
-  #   cap_add:
-  #     - NET_ADMIN
-  #   restart: unless-stopped
-
-  # nextcloud:
-  #  image: ghcr.io/linuxserver/nextcloud
-  #  container_name: nextcloud
-  #  environment:
-  #    - PUID=${PUID}
-  #    - PGID=${PGID}
-  #    - TZ=${TIMEZONE}
-  #  volumes:
-  #    - ${CONFIG}/nextcloud:/config
-  #    - ${NEXTCLOUD_DIR}:/data
-  #  ports:
-  #    - 8081:443
-  #  restart: unless-stopped
+  calibre-web:
+    image: lscr.io/linuxserver/calibre-web:latest
+    container_name: calibre-web
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TIMEZONE}
+      - DOCKER_MODS=linuxserver/mods:universal-calibre #optional
+      - OAUTHLIB_RELAX_TOKEN_SCOPE=1 #optional
+    volumes:
+      - ${CONFIG}/calibre:/config
+      - ${CALIBRE_DATA}:/books
+    ports:
+      - 8083:8083
+    restart: unless-stopped

@@ -5,6 +5,9 @@ version: "3"
 tasks:
   bootstrap:
     cmds:
+      - mkdir -p ~/venvs
+      - "[ -f ~/venvs/ansible/pyvenv.cfg ] || python3 -m venv ~/venvs/ansible"
+      - source ~/venvs/ansible/bin/activate
       - pip3 install -r ./requirements.txt
       - ansible-galaxy install --roles-path ./roles -r requirements.yml
       - ansible-galaxy collection install -r requirements.yml
@@ -16,3 +19,15 @@ tasks:
       - ansible-lint eggs.yml site.yml
       - cd scripts && shellcheck *.sh
       - black --check scripts/*.py
+
+  chicken:
+    cmds:
+      - ANSIBLE_ROLES_PATH=./ansible-roles ansible-playbook chicken.yml
+
+  traffic:
+    cmds:
+      - ANSIBLE_ROLES_PATH=./ansible-roles ansible-playbook traffic.yml
+
+  eggs:
+    cmds:
+      - ANSIBLE_ROLES_PATH=./ansible-roles ansible-playbook eggs.yml

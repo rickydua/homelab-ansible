@@ -8,11 +8,14 @@
 - name: Ensure options-ssl-nginx.conf and ssl-dhparams.pem exists
   get_url:
     url: "{{ item.url }}"
+    mode: "{{ item.mode }}"
     dest: "{{ item.dest }}"
   loop:
     - dest: /etc/letsencrypt/options-ssl-nginx.conf
+      mode: "0644"
       url: >-
         https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf
 
     - url: https://ssl-config.mozilla.org/ffdhe2048.txt
+      mode: "0644"
       dest: /etc/letsencrypt/ssl-dhparams.pem
