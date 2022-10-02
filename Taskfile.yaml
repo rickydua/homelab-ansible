@@ -9,7 +9,7 @@ tasks:
       - "[ -f ~/venvs/ansible/pyvenv.cfg ] || python3 -m venv ~/venvs/ansible"
       - source ~/venvs/ansible/bin/activate
       - pip3 install -r ./requirements.txt
-      - ansible-galaxy install --roles-path ./roles -r requirements.yml
+      - ansible-galaxy install --roles-path ./ansible-roles -r requirements.yml
       - ansible-galaxy collection install -r requirements.yml
     silent: true
 
