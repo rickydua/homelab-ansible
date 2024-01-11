@@ -48,7 +48,7 @@ If you need to setup up a new control node from scratch (new laptop maybe)
 - Validate/modify secrets in [secrets.yml](vars/secrets.yml) for TrueNAS
   - Run `ansible-vault edit ./vars/secrets.yml` to modify secrets
 - Confirm values in `host_vars/eggs.yml`
-- Run `ansible-playbook eggs.yml`
+- Run `task eggs`
 
 ### Remaining Setup
 
@@ -92,7 +92,7 @@ If you have setup Raspberry PI with above instructions, you can use it to unlock
 - Copy truenas ssh public key to PI host (for password-less auth)
   - Confirm that we can ssh as `root` on `pi`
   - Run `ssh-copy-id -i ~/.ssh/id_rsa.pub root@pi`
-- Run `ansible-playbook eggs.yml` just to be sure
+- Run `task eggs` just to be sure
 - Create a task in `Init/Shutdown Scripts` under `Tasks`
 - Fill below ⬇️
 

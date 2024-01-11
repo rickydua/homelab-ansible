@@ -20,6 +20,11 @@
         update_cache: true
         upgrade: true
 
+    - name: Install crontab
+      apt:
+        name:
+          - cron
+
   roles:
     - role: geerlingguy.certbot
     - role: geerlingguy.nginx
